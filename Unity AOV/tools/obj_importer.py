@@ -324,6 +324,11 @@ def _update_submesh_and_flags(m, num_vertices: int, num_indices: int):
 			m.m_MeshCompression = 0
 		if hasattr(m, "m_StreamCompression"):
 			m.m_StreamCompression = 0
+		if hasattr(m, "m_MeshUsageFlags"):
+			try:
+				m.m_MeshUsageFlags = int(max(0, min(255, int(m.m_MeshUsageFlags))))
+			except Exception:
+				m.m_MeshUsageFlags = 0
 	except Exception:
 		pass
 
