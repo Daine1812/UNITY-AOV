@@ -381,7 +381,18 @@ def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norm
 		channels[4].offset = 24
 		channels[4].dimension = 2
 		vd.m_Channels = channels
-		vd.m_Streams = {0: object()}
+		# Set stream 0 metadata
+		try:
+			StreamInfo = getattr(MeshMod, 'StreamInfo')
+			si0 = object.__new__(StreamInfo)
+			si0.channelMask = (1 << 0) | (1 << 1) | (1 << 4)
+			si0.offset = 0
+			si0.stride = stride
+			si0.dividerOp = 0
+			si0.frequency = 0
+			vd.m_Streams = {0: si0}
+		except Exception:
+			vd.m_Streams = {0: object()}
 		vd.m_DataSize = bytes(buf)
 		# Clear compressed mesh to avoid overrides
 		cm = getattr(m, 'm_CompressedMesh', None)
