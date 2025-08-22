@@ -120,17 +120,35 @@ def to_unity_convention(mesh: ObjMesh, flip_x: bool = True) -> ObjMesh:
 # Optional: Integrate with Unity AOV environment to replace an existing Mesh
 
 def _load_env_class() -> Optional[object]:
-	# Load Environment from parent dir of this script (works even with space in folder name)
+	# Load Environment as part of its package to satisfy relative imports inside environment.py
 	base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-	env_path = os.path.join(base_dir, "environment.py")
-	if not os.path.exists(env_path):
+	package_name = os.path.basename(base_dir)
+	parent_dir = os.path.dirname(base_dir)
+	if parent_dir not in sys.path:
+		sys.path.insert(0, parent_dir)
+	# Try normal package import first, e.g., Unity_AOV.environment
+	try:
+		mod = importlib.import_module(f"{package_name}.environment")
+		return getattr(mod, "Environment", None)
+	except Exception:
+		pass
+	# Create a synthetic package if needed and load via spec with a qualified name
+	try:
+		if package_name not in sys.modules:
+			import types
+			pkg = types.ModuleType(package_name)
+			pkg.__path__ = [base_dir]
+			sys.modules[package_name] = pkg
+		env_path = os.path.join(base_dir, "environment.py")
+		spec = importlib.util.spec_from_file_location(f"{package_name}.environment", env_path)
+		if spec and spec.loader:
+			mod = importlib.util.module_from_spec(spec)
+			sys.modules[f"{package_name}.environment"] = mod
+			spec.loader.exec_module(mod)
+			return getattr(mod, "Environment", None)
+	except Exception:
 		return None
-	spec = importlib.util.spec_from_file_location("unity_aov_environment", env_path)
-	if not spec or not spec.loader:
-		return None
-	mod = importlib.util.module_from_spec(spec)
-	spec.loader.exec_module(mod)
-	return getattr(mod, "Environment", None)
+	return None
 
 
 def list_meshes(assets_path: str) -> List[Dict[str, Any]]:
