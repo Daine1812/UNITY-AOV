@@ -265,6 +265,7 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				m = candidate.read(return_typetree_on_error=True)
 				if hasattr(m, "m_VertexData") and getattr(m.m_VertexData, "m_VertexCount", 0) > 0:
 					return False, "Target mesh uses modern VertexData (not supported)"
+				# Populate geometry
 				m.m_VertexCount = len(obj_mesh.vertices)
 				m.m_Vertices = [c for v in obj_mesh.vertices for c in (v[0], v[1], v[2])]
 				m.m_Normals = [c for n in obj_mesh.normals_u for c in (n[0], n[1], n[2])]
@@ -272,17 +273,29 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
 				m.m_Indices = list(obj_mesh.indices)
 				m.m_IndexBuffer = list(obj_mesh.indices)
-				m.m_SubMeshes = [{
-					"firstByte": 0,
-					"indexCount": len(obj_mesh.indices),
-					"topology": 0,
-					"triangleCount": len(obj_mesh.indices) // 3,
-					"baseVertex": 0,
-					"firstVertex": 0,
-					"vertexCount": len(obj_mesh.vertices),
-					"localAABB": getattr(m, "m_LocalAABB", None),
-				}]
-				m.save_typetree()
+				# Update existing submeshes if any
+				try:
+					submeshes = getattr(m, "m_SubMeshes", None)
+					if submeshes and len(submeshes) > 0:
+						sm0 = submeshes[0]
+						# Attribute-style if it's an object; dict-style otherwise
+						if hasattr(sm0, "indexCount"):
+							sm0.indexCount = len(obj_mesh.indices)
+							sm0.vertexCount = len(obj_mesh.vertices)
+							# keep topology and others as-is
+						elif isinstance(sm0, dict):
+							sm0["indexCount"] = len(obj_mesh.indices)
+							sm0["vertexCount"] = len(obj_mesh.vertices)
+				except Exception:
+					pass
+				# Save using class save and mark changed
+				try:
+					m.save()
+				except Exception as e:
+					if debug:
+						print(f"[DEBUG] m.save() failed: {e}")
+					# fallback to typetree
+					m.save_typetree()
 				try:
 					m.assets_file.mark_changed()
 				except Exception:
@@ -321,22 +334,25 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
 		m.m_Indices = list(obj_mesh.indices)
 		m.m_IndexBuffer = list(obj_mesh.indices)
-		m.m_SubMeshes = [{
-			"firstByte": 0,
-			"indexCount": len(obj_mesh.indices),
-			"topology": 0,
-			"triangleCount": len(obj_mesh.indices) // 3,
-			"baseVertex": 0,
-			"firstVertex": 0,
-			"vertexCount": len(obj_mesh.vertices),
-			"localAABB": getattr(m, "m_LocalAABB", None),
-		}]
-		# Try save; UnityPy objects also support save_typetree in most cases
+		# Update existing submeshes if any
 		try:
-			m.save_typetree()
+			submeshes = getattr(m, "m_SubMeshes", None)
+			if submeshes and len(submeshes) > 0:
+				sm0 = submeshes[0]
+				if hasattr(sm0, "indexCount"):
+					sm0.indexCount = len(obj_mesh.indices)
+					sm0.vertexCount = len(obj_mesh.vertices)
+				elif isinstance(sm0, dict):
+					sm0["indexCount"] = len(obj_mesh.indices)
+					sm0["vertexCount"] = len(obj_mesh.vertices)
+		except Exception:
+			pass
+		# Try save
+		try:
+			m.save()
 		except Exception:
 			try:
-				m.save()
+				m.save_typetree()
 			except Exception as e2:
 				return False, f"Failed to save mesh data: {e2}"
 		if out_dir:
