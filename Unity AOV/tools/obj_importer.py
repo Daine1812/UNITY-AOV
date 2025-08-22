@@ -199,6 +199,47 @@ def list_meshes(assets_path: str) -> List[Dict[str, Any]]:
 		return []
 
 
+def scan_dir_for_meshes(scan_path: str, find_name: Optional[str] = None) -> List[Dict[str, Any]]:
+	"""Recursively scan a directory to find files that contain Mesh objects. Uses UnityPy per file.
+	If find_name is provided, only return matches whose container basename startswith(find_name).
+	"""
+	results: List[Dict[str, Any]] = []
+	try:
+		import UnityPy
+	except Exception:
+		return results
+
+	if os.path.isfile(scan_path):
+		paths = [scan_path]
+	else:
+		paths = []
+		for root, _, files in os.walk(scan_path):
+			for fn in files:
+				paths.append(os.path.join(root, fn))
+
+	for fp in paths:
+		try:
+			env = UnityPy.load(fp)
+		except Exception:
+			continue
+		try:
+			for obj in env.objects:
+				if obj.type.name != "Mesh":
+					continue
+				container = getattr(obj, "container", None)
+				base = os.path.basename(container) if container else None
+				if find_name and (not base or not base.startswith(find_name)):
+					continue
+				results.append({
+					"file": fp,
+					"path_id": obj.path_id,
+					"container": container,
+				})
+		except Exception:
+			continue
+	return results
+
+
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
@@ -322,7 +363,18 @@ def main(argv: List[str]) -> int:
 	p.add_argument("--no-flip-x", dest="no_flip_x", action="store_true", help="Do not flip X axis (by default X is negated)")
 	p.add_argument("--list-meshes", dest="list_meshes", action="store_true", help="List meshes (path_id, container, modern/legacy) in the assets")
 	p.add_argument("--debug", dest="debug", action="store_true", help="Print debug info")
+	p.add_argument("--scan-dir", dest="scan_dir", help="Scan a directory recursively to locate files containing meshes")
+	p.add_argument("--find-name", dest="find_name", help="When used with --scan-dir, filter meshes whose container basename startswith this name")
 	args = p.parse_args(argv)
+
+	if args.scan_dir:
+		matches = scan_dir_for_meshes(args.scan_dir, args.find_name)
+		if not matches:
+			print("No mesh matches found in directory")
+			return 3
+		for m in matches:
+			print(f"file={m['file']} path_id={m['path_id']} container={m['container']}")
+		return 0
 
 	if args.list_meshes:
 		if not args.assets:
