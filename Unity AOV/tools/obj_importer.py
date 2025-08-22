@@ -356,13 +356,31 @@ def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norm
 			vd = object.__new__(VertexDataCls)
 		m.m_VertexData = vd
 		vd.m_VertexCount = N
+		# Optionally set m_CurrentChannels bitmask if field exists (mainly <2018, safe otherwise)
+		if not hasattr(vd, 'm_CurrentChannels'):
+			try:
+				vd.m_CurrentChannels = 0
+			except Exception:
+				pass
 		# Build channels list with correct indices (0=pos,1=normal,2=tangent,3=color,4=uv0)
-		ch_pos = object.__new__(ChannelInfo); ch_pos.stream = 0; ch_pos.offset = 0; ch_pos.format = 0; ch_pos.dimension = 3
-		ch_nrm = object.__new__(ChannelInfo); ch_nrm.stream = 0; ch_nrm.offset = 12; ch_nrm.format = 0; ch_nrm.dimension = 3
-		ch_tan = object.__new__(ChannelInfo); ch_tan.stream = 0; ch_tan.offset = 0; ch_tan.format = 0; ch_tan.dimension = 0
-		ch_col = object.__new__(ChannelInfo); ch_col.stream = 0; ch_col.offset = 0; ch_col.format = 0; ch_col.dimension = 0
-		ch_uv0 = object.__new__(ChannelInfo); ch_uv0.stream = 0; ch_uv0.offset = 24; ch_uv0.format = 0; ch_uv0.dimension = 2
-		vd.m_Channels = [ch_pos, ch_nrm, ch_tan, ch_col, ch_uv0]
+		channels = []
+		for i in range(12):
+			ci = object.__new__(ChannelInfo)
+			ci.stream = 0
+			ci.offset = 0
+			ci.format = 0
+			ci.dimension = 0
+			channels.append(ci)
+		# pos
+		channels[0].offset = 0
+		channels[0].dimension = 3
+		# normal
+		channels[1].offset = 12
+		channels[1].dimension = 3
+		# uv0 at index 4
+		channels[4].offset = 24
+		channels[4].dimension = 2
+		vd.m_Channels = channels
 		vd.m_Streams = {0: object()}
 		vd.m_DataSize = bytes(buf)
 		# Clear compressed mesh to avoid overrides
