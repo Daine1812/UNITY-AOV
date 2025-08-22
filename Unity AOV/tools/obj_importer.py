@@ -134,15 +134,21 @@ def _load_env_class() -> Optional[object]:
 		pass
 	# Create a synthetic package if needed and load via spec with a qualified name
 	try:
+		import types
+		from importlib.machinery import ModuleSpec
+		# Synthesize the package module
 		if package_name not in sys.modules:
-			import types
 			pkg = types.ModuleType(package_name)
 			pkg.__path__ = [base_dir]
+			pkg.__package__ = package_name
+			pkg.__spec__ = ModuleSpec(name=package_name, loader=None, is_package=True)
 			sys.modules[package_name] = pkg
+		# Load environment as submodule of that package
 		env_path = os.path.join(base_dir, "environment.py")
 		spec = importlib.util.spec_from_file_location(f"{package_name}.environment", env_path)
 		if spec and spec.loader:
 			mod = importlib.util.module_from_spec(spec)
+			mod.__package__ = package_name
 			sys.modules[f"{package_name}.environment"] = mod
 			spec.loader.exec_module(mod)
 			return getattr(mod, "Environment", None)
