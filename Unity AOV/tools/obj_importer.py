@@ -454,6 +454,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 					ver = getattr(m, 'version', (2022,3,5))
 					if ver >= (2019,):
 						_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+						# Provide index buffer for triangle build
+						m.m_IndexBuffer = list(obj_mesh.indices)
 				except Exception as e:
 					if debug:
 						print(f"[DEBUG] VertexData rebuild skipped: {e}")
@@ -542,6 +544,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 			ver = getattr(m, 'version', (2022,3,5))
 			if ver >= (2019,):
 				_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+				# Provide index buffer for triangle build
+				m.m_IndexBuffer = list(obj_mesh.indices)
 		except Exception as e:
 			if debug:
 				print(f"[DEBUG] VertexData rebuild skipped: {e}")
