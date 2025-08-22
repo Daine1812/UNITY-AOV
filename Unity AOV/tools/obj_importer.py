@@ -240,6 +240,88 @@ def scan_dir_for_meshes(scan_path: str, find_name: Optional[str] = None) -> List
 	return results
 
 
+def _update_aabb(m, verts: List[Tuple[float, float, float]]):
+	if not verts:
+		return
+	try:
+		xs = [v[0] for v in verts]
+		ys = [v[1] for v in verts]
+		zs = [v[2] for v in verts]
+		minx, maxx = min(xs), max(xs)
+		miny, maxy = min(ys), max(ys)
+		minz, maxz = min(zs), max(zs)
+		cx = (minx + maxx) * 0.5
+		cy = (miny + maxy) * 0.5
+		cz = (minz + maxz) * 0.5
+		ex = (maxx - cx)
+		ey = (maxy - cy)
+		ez = (maxz - cz)
+		if hasattr(m, "m_LocalAABB") and m.m_LocalAABB:
+			la = m.m_LocalAABB
+			# Common AABB layout: m_Center (Vector3), m_Extent (Vector3)
+			if hasattr(la, "m_Center") and hasattr(la, "m_Extent"):
+				if hasattr(la.m_Center, "x"):
+					la.m_Center.x, la.m_Center.y, la.m_Center.z = cx, cy, cz
+					la.m_Extent.x, la.m_Extent.y, la.m_Extent.z = ex, ey, ez
+				else:
+					# Fallback if stored as tuples/dicts
+					la.m_Center = getattr(la, "m_Center", (0, 0, 0))
+					la.m_Extent = getattr(la, "m_Extent", (0, 0, 0))
+					try:
+						la.m_Center = (cx, cy, cz)
+						la.m_Extent = (ex, ey, ez)
+					except Exception:
+						pass
+			# Also update first submesh localAABB when possible
+			if hasattr(m, "m_SubMeshes") and m.m_SubMeshes:
+				sm0 = m.m_SubMeshes[0]
+				if hasattr(sm0, "localAABB") and sm0.localAABB and hasattr(sm0.localAABB, "m_Center"):
+					if hasattr(sm0.localAABB.m_Center, "x"):
+						sm0.localAABB.m_Center.x, sm0.localAABB.m_Center.y, sm0.localAABB.m_Center.z = cx, cy, cz
+						sm0.localAABB.m_Extent.x, sm0.localAABB.m_Extent.y, sm0.localAABB.m_Extent.z = ex, ey, ez
+	except Exception:
+		pass
+
+
+def _update_submesh_and_flags(m, num_vertices: int, num_indices: int):
+	try:
+		if hasattr(m, "m_SubMeshes") and m.m_SubMeshes:
+			sm0 = m.m_SubMeshes[0]
+			if hasattr(sm0, "indexCount"):
+				sm0.indexCount = num_indices
+			if hasattr(sm0, "vertexCount"):
+				sm0.vertexCount = num_vertices
+			if hasattr(sm0, "firstVertex"):
+				sm0.firstVertex = 0
+			if hasattr(sm0, "firstByte"):
+				sm0.firstByte = 0
+			if hasattr(sm0, "baseVertex"):
+				sm0.baseVertex = 0
+			if hasattr(sm0, "topology"):
+				try:
+					# 0 usually equals triangles
+					sm0.topology = 0 if isinstance(sm0.topology, int) else getattr(sm0.topology, "Triangles", 0)
+				except Exception:
+					pass
+		# Helpful flags
+		if hasattr(m, "m_IsReadable"):
+			m.m_IsReadable = True
+		if hasattr(m, "m_KeepVertices"):
+			m.m_KeepVertices = True
+		if hasattr(m, "m_KeepIndices"):
+			m.m_KeepIndices = True
+		# Clear baked collision meshes if present
+		if hasattr(m, "m_BakedConvexCollisionMesh"):
+			m.m_BakedConvexCollisionMesh = b""
+		if hasattr(m, "m_BakedTriangleCollisionMesh"):
+			m.m_BakedTriangleCollisionMesh = b""
+		# Index format for >=2017.3
+		if hasattr(m, "m_IndexFormat"):
+			m.m_IndexFormat = 0 if num_indices == 0 or (num_vertices <= 65535) else 1
+	except Exception:
+		pass
+
+
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
@@ -274,6 +356,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				m.m_Indices = list(obj_mesh.indices)
 				# Avoid assigning m_IndexBuffer directly for legacy formats
 				# writer will serialize from m_Indices/m_Use16BitIndices
+				_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
+				_update_aabb(m, obj_mesh.vertices)
 				# Update existing submeshes if any
 				try:
 					submeshes = getattr(m, "m_SubMeshes", None)
@@ -338,6 +422,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
 		m.m_Indices = list(obj_mesh.indices)
 		# Avoid assigning m_IndexBuffer directly for legacy formats
+		_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
+		_update_aabb(m, obj_mesh.vertices)
 		# Update existing submeshes if any
 		try:
 			submeshes = getattr(m, "m_SubMeshes", None)
