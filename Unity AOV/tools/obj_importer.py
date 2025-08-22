@@ -460,7 +460,7 @@ def _clamp_vertexdata_bytes(vd):
 		pass
 
 
-def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False, force_legacy: bool = False) -> Tuple[bool, str]:
+def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False, force_legacy: bool = False, export_only: Optional[str] = None) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
 	This currently supports meshes that use legacy direct arrays (no modern VertexData streams).
@@ -564,6 +564,15 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 							sm0["vertexCount"] = len(obj_mesh.vertices)
 				except Exception:
 					pass
+				# Export-only handling
+				if export_only:
+					try:
+						os.makedirs(os.path.dirname(os.path.abspath(export_only)) or ".", exist_ok=True)
+						with open(export_only, "w", encoding="utf8") as f:
+							f.write(m.export())
+						return True, export_only
+					except Exception as e:
+						return False, f"Export failed: {e}"
 				# Save using class save and mark changed
 				try:
 					m.save()
@@ -677,6 +686,15 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 					sm0["vertexCount"] = len(obj_mesh.vertices)
 		except Exception:
 			pass
+		# Export-only handling
+		if export_only:
+			try:
+				os.makedirs(os.path.dirname(os.path.abspath(export_only)) or ".", exist_ok=True)
+				with open(export_only, "w", encoding="utf8") as f:
+					f.write(m.export())
+				return True, export_only
+			except Exception as e:
+				return False, f"Export failed: {e}"
 		# Try save
 		try:
 			m.save()
@@ -710,6 +728,7 @@ def main(argv: List[str]) -> int:
 	p.add_argument("--find-name", dest="find_name", help="When used with --scan-dir, filter meshes whose container basename startswith this name")
 	p.add_argument("--sanitize", dest="sanitize", action="store_true", help="Clear optional channels (UV1..7, tangents, colors, skin, shapes) to improve compatibility")
 	p.add_argument("--force-legacy", dest="force_legacy", action="store_true", help="Strip VertexData/CompressedMesh to save using legacy arrays")
+	p.add_argument("--export-only", dest="export_only", help="Export replaced mesh to this OBJ path without saving the asset")
 	args = p.parse_args(argv)
 
 	if args.scan_dir:
@@ -769,6 +788,7 @@ def main(argv: List[str]) -> int:
 			debug=args.debug,
 			sanitize=getattr(args, "sanitize", False),
 			force_legacy=getattr(args, "force_legacy", False),
+			export_only=args.export_only,
 		)
 		if not ok:
 			print(f"Mesh replacement failed: {msg}")
