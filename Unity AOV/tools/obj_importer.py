@@ -375,6 +375,15 @@ def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norm
 						pv.m_NumItems = 0
 				except Exception:
 					pass
+		# Disable external stream to force inline vertex data
+		try:
+			sd = getattr(m, 'm_StreamData', None)
+			if sd is not None:
+				sd.path = ""
+				sd.offset = 0
+				sd.size = 0
+		except Exception:
+			pass
 		# Also set index format
 		if hasattr(m, 'm_IndexFormat'):
 			m.m_IndexFormat = 0 if N <= 65535 else 1
