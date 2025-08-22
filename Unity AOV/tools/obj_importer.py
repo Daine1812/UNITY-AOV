@@ -343,7 +343,7 @@ def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norm
 			nx,ny,nz = norms[i]
 			u,v = uvs[i]
 			for val in (x,y,z,nx,ny,nz,u,v):
-				buf[off:off+4] = struct.pack('>f', float(val))
+				buf[off:off+4] = struct.pack('<f', float(val))
 				off += 4
 		# Channel indices: 0=pos,1=normal,4=uv0
 		from importlib import import_module
