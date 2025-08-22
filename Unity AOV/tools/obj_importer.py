@@ -319,6 +319,11 @@ def _update_submesh_and_flags(m, num_vertices: int, num_indices: int):
 		# Index format for >=2017.3
 		if hasattr(m, "m_IndexFormat"):
 			m.m_IndexFormat = 0 if num_indices == 0 or (num_vertices <= 65535) else 1
+		# Compression flags as safe defaults
+		if hasattr(m, "m_MeshCompression"):
+			m.m_MeshCompression = 0
+		if hasattr(m, "m_StreamCompression"):
+			m.m_StreamCompression = 0
 	except Exception:
 		pass
 
