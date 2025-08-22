@@ -521,6 +521,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 							pv = getattr(cm, fld, None)
 							if pv is not None and hasattr(pv, 'm_NumItems'):
 								pv.m_NumItems = 0
+					# ensure index buffer for legacy triangle build
+					m.m_IndexBuffer = list(obj_mesh.indices)
 				else:
 					try:
 						ver = getattr(m, 'version', (2022,3,5))
@@ -636,6 +638,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 					pv = getattr(cm, fld, None)
 					if pv is not None and hasattr(pv, 'm_NumItems'):
 						pv.m_NumItems = 0
+			# ensure index buffer for legacy triangle build
+			m.m_IndexBuffer = list(obj_mesh.indices)
 		else:
 			try:
 				ver = getattr(m, 'version', (2022,3,5))
