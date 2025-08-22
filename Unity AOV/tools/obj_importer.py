@@ -4,6 +4,7 @@ import json
 import importlib.util
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional, Any
+import struct
 
 # Minimal OBJ importer (no external deps)
 
@@ -322,6 +323,67 @@ def _update_submesh_and_flags(m, num_vertices: int, num_indices: int):
 		pass
 
 
+def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norms: List[Tuple[float, float, float]], uvs: List[Tuple[float, float]], debug: bool=False):
+	"""Builds minimal m_VertexData (pos3, normal3, uv0-2) for Unity 2019+.
+	Packs floats as big-endian to match MeshHelper.BytesToFloatArray.
+	"""
+	try:
+		N = len(verts)
+		# Ensure normals/uvs lengths match
+		if len(norms) != N:
+			norms = [(0.0, 0.0, 1.0)] * N
+		if len(uvs) != N:
+			uvs = [(0.0, 0.0)] * N
+		stride = 4 * (3 + 3 + 2)  # pos3 + normal3 + uv2
+		# Build interleaved data
+		buf = bytearray(N * stride)
+		off = 0
+		for i in range(N):
+			x,y,z = verts[i]
+			nx,ny,nz = norms[i]
+			u,v = uvs[i]
+			for val in (x,y,z,nx,ny,nz,u,v):
+				buf[off:off+4] = struct.pack('>f', float(val))
+				off += 4
+		# Channel indices: 0=pos,1=normal,4=uv0
+		from importlib import import_module
+		MeshMod = import_module(f"{m.__class__.__module__}")
+		ChannelInfo = getattr(MeshMod, 'ChannelInfo')
+		VertexDataCls = getattr(MeshMod, 'VertexData')
+		# If m_VertexData missing, create a blank-like object
+		vd = getattr(m, 'm_VertexData', None)
+		if vd is None:
+			vd = object.__new__(VertexDataCls)
+		m.m_VertexData = vd
+		vd.m_VertexCount = N
+		# Build channels list
+		ch_pos = object.__new__(ChannelInfo); ch_pos.stream = 0; ch_pos.offset = 0; ch_pos.format = 0; ch_pos.dimension = 3
+		ch_nrm = object.__new__(ChannelInfo); ch_nrm.stream = 0; ch_nrm.offset = 12; ch_nrm.format = 0; ch_nrm.dimension = 3
+		ch_uv0 = object.__new__(ChannelInfo); ch_uv0.stream = 0; ch_uv0.offset = 24; ch_uv0.format = 0; ch_uv0.dimension = 2
+		vd.m_Channels = [ch_pos, ch_nrm, ch_uv0]
+		vd.m_Streams = {0: object()}
+		vd.m_DataSize = bytes(buf)
+		# Clear compressed mesh to avoid overrides
+		cm = getattr(m, 'm_CompressedMesh', None)
+		if cm is not None:
+			for fld in ('m_Vertices','m_UV','m_Normals','m_Tangents','m_Weights','m_BoneIndices','m_Triangles','m_FloatColors'):
+				try:
+					pv = getattr(cm, fld, None)
+					if pv is not None and hasattr(pv, 'm_NumItems'):
+						pv.m_NumItems = 0
+				except Exception:
+					pass
+		# Also set index format
+		if hasattr(m, 'm_IndexFormat'):
+			m.m_IndexFormat = 0 if N <= 65535 else 1
+		if debug:
+			print(f"[DEBUG] Rebuilt VertexData: N={N}, stride={stride}")
+	except Exception as e:
+		if debug:
+			print(f"[DEBUG] Rebuild VertexData failed: {e}")
+		raise
+
+
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
@@ -358,6 +420,14 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				# writer will serialize from m_Indices/m_Use16BitIndices
 				_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 				_update_aabb(m, obj_mesh.vertices)
+				# For Unity 2019+ ensure VertexData is present
+				try:
+					ver = getattr(m, 'version', (2022,3,5))
+					if ver >= (2019,):
+						_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+				except Exception as e:
+					if debug:
+						print(f"[DEBUG] VertexData rebuild skipped: {e}")
 				# Sanitize optional channels to avoid viewer strictness
 				if sanitize:
 					for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
@@ -438,6 +508,14 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		# Avoid assigning m_IndexBuffer directly for legacy formats
 		_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 		_update_aabb(m, obj_mesh.vertices)
+		# For Unity 2019+ ensure VertexData is present
+		try:
+			ver = getattr(m, 'version', (2022,3,5))
+			if ver >= (2019,):
+				_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+		except Exception as e:
+			if debug:
+				print(f"[DEBUG] VertexData rebuild skipped: {e}")
 		# Sanitize optional channels to avoid viewer strictness
 		if sanitize:
 			for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
