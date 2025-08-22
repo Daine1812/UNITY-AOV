@@ -272,7 +272,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
 				m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
 				m.m_Indices = list(obj_mesh.indices)
-				m.m_IndexBuffer = list(obj_mesh.indices)
+				# Avoid assigning m_IndexBuffer directly for legacy formats
+				# writer will serialize from m_Indices/m_Use16BitIndices
 				# Update existing submeshes if any
 				try:
 					submeshes = getattr(m, "m_SubMeshes", None)
@@ -336,7 +337,7 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
 		m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
 		m.m_Indices = list(obj_mesh.indices)
-		m.m_IndexBuffer = list(obj_mesh.indices)
+		# Avoid assigning m_IndexBuffer directly for legacy formats
 		# Update existing submeshes if any
 		try:
 			submeshes = getattr(m, "m_SubMeshes", None)
