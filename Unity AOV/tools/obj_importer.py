@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import importlib.util
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
 
@@ -118,24 +119,29 @@ def to_unity_convention(mesh: ObjMesh, flip_x: bool = True) -> ObjMesh:
 
 # Optional: Integrate with Unity AOV environment to replace an existing Mesh
 
+def _load_env_class() -> Optional[object]:
+	# Load Environment from parent dir of this script (works even with space in folder name)
+	base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+	env_path = os.path.join(base_dir, "environment.py")
+	if not os.path.exists(env_path):
+		return None
+	spec = importlib.util.spec_from_file_location("unity_aov_environment", env_path)
+	if not spec or not spec.loader:
+		return None
+	mod = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(mod)
+	return getattr(mod, "Environment", None)
+
+
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None) -> bool:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
 	This currently supports meshes that use legacy direct arrays (no modern VertexData streams).
 	Returns True if replacement succeeded and was saved.
 	"""
-	try:
-		from Unity\ AOV.environment import Environment  # type: ignore
-		from Unity\ AOV.enums.ClassIDType import ClassIDType  # type: ignore
-		from Unity\ AOV.classes.Mesh import Mesh as UnityMesh  # type: ignore
-	except Exception:
-		# Fallback import path if the package name differs (e.g., UnityPy_AOV)
-		try:
-			from Unity_AOV.environment import Environment  # type: ignore
-			from Unity_AOV.enums.ClassIDType import ClassIDType  # type: ignore
-			from Unity_AOV.classes.Mesh import Mesh as UnityMesh  # type: ignore
-		except Exception:
-			return False
+	Environment = _load_env_class()
+	if Environment is None:
+		return False
 
 	env = Environment(assets_path)
 	candidate = None
@@ -164,40 +170,30 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 	m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
 	# Index data
 	m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
-	# Many engines store index buffer as m_IndexBuffer; also retain m_Indices to keep exporter compatibility
 	m.m_Indices = list(obj_mesh.indices)
 	m.m_IndexBuffer = list(obj_mesh.indices)
 
-	# Single SubMesh covering all indices
-	# If the SubMesh type exists, create a lightweight instance with required fields
-	try:
-		from Unity\ AOV.classes.Mesh import SubMesh  # type: ignore
-		sm = object.__new__(SubMesh)
-		sm.firstByte = 0
-		sm.indexCount = len(obj_mesh.indices)
-		sm.topology = 0  # assume triangles
-		sm.triangleCount = len(obj_mesh.indices) // 3
-		sm.baseVertex = 0
-		sm.firstVertex = 0
-		sm.vertexCount = len(obj_mesh.vertices)
-		sm.localAABB = getattr(m, "m_LocalAABB", None)
-		m.m_SubMeshes = [sm]
-	except Exception:
-		# Fallback: try to assign a typetree-like dict
-		m.m_SubMeshes = [{
-			"firstByte": 0,
-			"indexCount": len(obj_mesh.indices),
-			"topology": 0,
-			"triangleCount": len(obj_mesh.indices) // 3,
-			"baseVertex": 0,
-			"firstVertex": 0,
-			"vertexCount": len(obj_mesh.vertices),
-		}]
+	# Single SubMesh covering all indices (use dict to be compatible with typetree writer)
+	m.m_SubMeshes = [{
+		"firstByte": 0,
+		"indexCount": len(obj_mesh.indices),
+		"topology": 0,  # triangles
+		"triangleCount": len(obj_mesh.indices) // 3,
+		"baseVertex": 0,
+		"firstVertex": 0,
+		"vertexCount": len(obj_mesh.vertices),
+		"localAABB": getattr(m, "m_LocalAABB", None),
+	}]
 
-	# Save back into the asset and write files
-	m.save()
+	# Save via typetree to ensure all fields are written
+	m.save_typetree()
+	# Ensure the asset is flagged as changed
+	m.assets_file.mark_changed()
+
+	# Prepare output dir and save
 	if out_dir:
 		env.out_path = out_dir
+	os.makedirs(env.out_path, exist_ok=True)
 	env.save(pack="none")
 	return True
 
