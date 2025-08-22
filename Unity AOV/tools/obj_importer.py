@@ -460,7 +460,7 @@ def _clamp_vertexdata_bytes(vd):
 		pass
 
 
-def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False) -> Tuple[bool, str]:
+def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False, force_legacy: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
 	This currently supports meshes that use legacy direct arrays (no modern VertexData streams).
@@ -496,18 +496,43 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				# writer will serialize from m_Indices/m_Use16BitIndices
 				_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 				_update_aabb(m, obj_mesh.vertices)
-				# For Unity 2019+ ensure VertexData is present
-				try:
-					ver = getattr(m, 'version', (2022,3,5))
-					if ver >= (2019,):
-						_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
-						# Provide index buffer for triangle build
-						m.m_IndexBuffer = list(obj_mesh.indices)
-						# Clamp byte fields in channels/streams
-						_clamp_vertexdata_bytes(m.m_VertexData)
-				except Exception as e:
-					if debug:
-						print(f"[DEBUG] VertexData rebuild skipped: {e}")
+				# Vertex data handling
+				if force_legacy:
+					vd = getattr(m, 'm_VertexData', None)
+					if vd is not None:
+						try:
+							vd.m_VertexCount = 0
+							vd.m_Channels = []
+							vd.m_Streams = {}
+							vd.m_DataSize = b""
+						except Exception:
+							pass
+					# disable external stream
+					sd = getattr(m, 'm_StreamData', None)
+					if sd is not None:
+						try:
+							sd.path = ""; sd.offset = 0; sd.size = 0
+						except Exception:
+							pass
+					# clear compressed
+					cm = getattr(m, 'm_CompressedMesh', None)
+					if cm is not None:
+						for fld in ('m_Vertices','m_UV','m_Normals','m_Tangents','m_Weights','m_BoneIndices','m_Triangles','m_FloatColors'):
+							pv = getattr(cm, fld, None)
+							if pv is not None and hasattr(pv, 'm_NumItems'):
+								pv.m_NumItems = 0
+				else:
+					try:
+						ver = getattr(m, 'version', (2022,3,5))
+						if ver >= (2019,):
+							_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+							# Provide index buffer for triangle build
+							m.m_IndexBuffer = list(obj_mesh.indices)
+							# Clamp byte fields in channels/streams
+							_clamp_vertexdata_bytes(m.m_VertexData)
+					except Exception as e:
+						if debug:
+							print(f"[DEBUG] VertexData rebuild skipped: {e}")
 				# Sanitize optional channels to avoid viewer strictness
 				if sanitize:
 					for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
@@ -588,18 +613,39 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		# Avoid assigning m_IndexBuffer directly for legacy formats
 		_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 		_update_aabb(m, obj_mesh.vertices)
-		# For Unity 2019+ ensure VertexData is present
-		try:
-			ver = getattr(m, 'version', (2022,3,5))
-			if ver >= (2019,):
-				_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
-				# Provide index buffer for triangle build
-				m.m_IndexBuffer = list(obj_mesh.indices)
-				# Clamp byte fields in channels/streams
-				_clamp_vertexdata_bytes(m.m_VertexData)
-		except Exception as e:
-			if debug:
-				print(f"[DEBUG] VertexData rebuild skipped: {e}")
+		# Vertex data handling (UnityPy fallback)
+		if force_legacy:
+			vd = getattr(m, 'm_VertexData', None)
+			if vd is not None:
+				try:
+					vd.m_VertexCount = 0
+					vd.m_Channels = []
+					vd.m_Streams = {}
+					vd.m_DataSize = b""
+				except Exception:
+					pass
+			sd = getattr(m, 'm_StreamData', None)
+			if sd is not None:
+				try:
+					sd.path = ""; sd.offset = 0; sd.size = 0
+				except Exception:
+					pass
+			cm = getattr(m, 'm_CompressedMesh', None)
+			if cm is not None:
+				for fld in ('m_Vertices','m_UV','m_Normals','m_Tangents','m_Weights','m_BoneIndices','m_Triangles','m_FloatColors'):
+					pv = getattr(cm, fld, None)
+					if pv is not None and hasattr(pv, 'm_NumItems'):
+						pv.m_NumItems = 0
+		else:
+			try:
+				ver = getattr(m, 'version', (2022,3,5))
+				if ver >= (2019,):
+					_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
+					m.m_IndexBuffer = list(obj_mesh.indices)
+					_clamp_vertexdata_bytes(m.m_VertexData)
+			except Exception as e:
+				if debug:
+					print(f"[DEBUG] VertexData rebuild skipped: {e}")
 		# Sanitize optional channels to avoid viewer strictness
 		if sanitize:
 			for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
@@ -659,6 +705,7 @@ def main(argv: List[str]) -> int:
 	p.add_argument("--scan-dir", dest="scan_dir", help="Scan a directory recursively to locate files containing meshes")
 	p.add_argument("--find-name", dest="find_name", help="When used with --scan-dir, filter meshes whose container basename startswith this name")
 	p.add_argument("--sanitize", dest="sanitize", action="store_true", help="Clear optional channels (UV1..7, tangents, colors, skin, shapes) to improve compatibility")
+	p.add_argument("--force-legacy", dest="force_legacy", action="store_true", help="Strip VertexData/CompressedMesh to save using legacy arrays")
 	args = p.parse_args(argv)
 
 	if args.scan_dir:
@@ -717,6 +764,7 @@ def main(argv: List[str]) -> int:
 			out_dir=args.out_dir or os.path.join(os.getcwd(), "output"),
 			debug=args.debug,
 			sanitize=getattr(args, "sanitize", False),
+			force_legacy=getattr(args, "force_legacy", False),
 		)
 		if not ok:
 			print(f"Mesh replacement failed: {msg}")
