@@ -3,7 +3,7 @@ import sys
 import json
 import importlib.util
 from dataclasses import dataclass
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Any
 
 # Minimal OBJ importer (no external deps)
 
@@ -133,15 +133,34 @@ def _load_env_class() -> Optional[object]:
 	return getattr(mod, "Environment", None)
 
 
-def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None) -> bool:
+def list_meshes(assets_path: str) -> List[Dict[str, Any]]:
+	Environment = _load_env_class()
+	if Environment is None:
+		return []
+	env = Environment(assets_path)
+	items: List[Dict[str, Any]] = []
+	for obj in env.objects:
+		if obj.type.name != "Mesh":
+			continue
+		m = obj.read(return_typetree_on_error=True)
+		modern = bool(getattr(m, "m_VertexData", None) and getattr(m.m_VertexData, "m_VertexCount", 0) > 0)
+		items.append({
+			"path_id": obj.path_id,
+			"container": obj.container,
+			"modern_vertex": modern,
+		})
+	return items
+
+
+def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
 	This currently supports meshes that use legacy direct arrays (no modern VertexData streams).
-	Returns True if replacement succeeded and was saved.
+	Returns (ok, reason/message).
 	"""
 	Environment = _load_env_class()
 	if Environment is None:
-		return False
+		return False, "Environment module not found"
 
 	env = Environment(assets_path)
 	candidate = None
@@ -156,12 +175,12 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 			break
 
 	if not candidate:
-		return False
+		return False, "Target mesh not found"
 
-	m = candidate.read()
+	m = candidate.read(return_typetree_on_error=True)
 	# Heuristic: if modern vertex streams are present, abort (not implemented here)
 	if hasattr(m, "m_VertexData") and getattr(m.m_VertexData, "m_VertexCount", 0) > 0:
-		return False
+		return False, "Target mesh uses modern VertexData (not supported)"
 
 	# Populate legacy arrays
 	m.m_VertexCount = len(obj_mesh.vertices)
@@ -186,38 +205,68 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 	}]
 
 	# Save via typetree to ensure all fields are written
-	m.save_typetree()
+	try:
+		m.save_typetree()
+	except Exception as e:
+		return False, f"Failed to save typetree: {e}"
 	# Ensure the asset is flagged as changed
-	m.assets_file.mark_changed()
+	try:
+		m.assets_file.mark_changed()
+	except Exception:
+		pass
 
 	# Prepare output dir and save
 	if out_dir:
 		env.out_path = out_dir
 	os.makedirs(env.out_path, exist_ok=True)
-	env.save(pack="none")
-	return True
+	try:
+		env.save(pack="none")
+	except Exception as e:
+		return False, f"Failed to save env: {e}"
+	return True, os.path.join(env.out_path, os.path.basename(assets_path))
 
 
 def main(argv: List[str]) -> int:
 	import argparse
 	p = argparse.ArgumentParser(description="OBJ Importer for Unity AOV tools")
-	p.add_argument("obj", help="Path to .obj file to import")
+	p.add_argument("obj", nargs="?", help="Path to .obj file to import")
 	p.add_argument("--to-json", dest="json_out", help="Output parsed mesh as JSON to this path")
 	p.add_argument("--assets", dest="assets", help="Path to a Unity assets/bundle file to modify")
 	p.add_argument("--mesh-name", dest="mesh_name", help="Target Mesh name prefix (matches container basename)")
 	p.add_argument("--mesh-path-id", dest="mesh_path_id", type=int, help="Target Mesh path_id")
 	p.add_argument("--out", dest="out_dir", help="Output directory for modified assets (default ./output)")
 	p.add_argument("--no-flip-x", dest="no_flip_x", action="store_true", help="Do not flip X axis (by default X is negated)")
+	p.add_argument("--list-meshes", dest="list_meshes", action="store_true", help="List meshes (path_id, container, modern/legacy) in the assets")
+	p.add_argument("--debug", dest="debug", action="store_true", help="Print debug info")
 	args = p.parse_args(argv)
 
-	if not os.path.exists(args.obj):
+	if args.list_meshes:
+		if not args.assets:
+			print("--assets is required for --list-meshes")
+			return 2
+		items = list_meshes(args.assets)
+		if not items:
+			print("No meshes found or Environment not available")
+			return 3
+		for it in items:
+			print(f"path_id={it['path_id']} modern_vertex={it['modern_vertex']} container={it['container']}")
+		return 0
+
+	if args.json_out and not args.obj:
+		print("OBJ path is required when using --to-json")
+		return 2
+
+	if args.obj and not os.path.exists(args.obj):
 		print(f"OBJ not found: {args.obj}")
 		return 2
 
-	mesh = parse_obj(args.obj)
-	mesh = to_unity_convention(mesh, flip_x=(not args.no_flip_x))
+	if args.obj:
+		mesh = parse_obj(args.obj)
+		mesh = to_unity_convention(mesh, flip_x=(not args.no_flip_x))
+	else:
+		mesh = None
 
-	if args.json_out:
+	if args.json_out and mesh:
 		payload = {
 			"vertices": [c for v in mesh.vertices for c in (v[0], v[1], v[2])],
 			"normals": [c for n in mesh.normals_u for c in (n[0], n[1], n[2])],
@@ -229,18 +278,19 @@ def main(argv: List[str]) -> int:
 			json.dump(payload, f)
 		print(f"Wrote JSON: {args.json_out}")
 
-	if args.assets:
-		ok = try_replace_mesh_in_assets(
+	if args.assets and mesh:
+		ok, msg = try_replace_mesh_in_assets(
 			assets_path=args.assets,
 			obj_mesh=mesh,
 			target_name=args.mesh_name,
 			target_path_id=args.mesh_path_id,
 			out_dir=args.out_dir or os.path.join(os.getcwd(), "output"),
+			debug=args.debug,
 		)
 		if not ok:
-			print("Mesh replacement not supported for this asset or target not found.")
+			print(f"Mesh replacement failed: {msg}")
 			return 3
-		print("Mesh replaced and assets saved.")
+		print(f"Mesh replaced and assets saved to: {msg}")
 
 	return 0
 
