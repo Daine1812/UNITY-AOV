@@ -159,21 +159,44 @@ def _load_env_class() -> Optional[object]:
 
 def list_meshes(assets_path: str) -> List[Dict[str, Any]]:
 	Environment = _load_env_class()
-	if Environment is None:
-		return []
-	env = Environment(assets_path)
 	items: List[Dict[str, Any]] = []
-	for obj in env.objects:
-		if obj.type.name != "Mesh":
-			continue
-		m = obj.read(return_typetree_on_error=True)
-		modern = bool(getattr(m, "m_VertexData", None) and getattr(m.m_VertexData, "m_VertexCount", 0) > 0)
-		items.append({
-			"path_id": obj.path_id,
-			"container": obj.container,
-			"modern_vertex": modern,
-		})
-	return items
+	if Environment is not None:
+		try:
+			env = Environment(assets_path)
+			for obj in env.objects:
+				if obj.type.name != "Mesh":
+					continue
+				m = obj.read(return_typetree_on_error=True)
+				modern = bool(getattr(m, "m_VertexData", None) and getattr(m.m_VertexData, "m_VertexCount", 0) > 0)
+				items.append({
+					"path_id": obj.path_id,
+					"container": obj.container,
+					"modern_vertex": modern,
+				})
+		except Exception:
+			pass
+	if items:
+		return items
+	# Fallback: UnityPy direct load
+	try:
+		import UnityPy
+		up_env = UnityPy.load(assets_path)
+		for obj in up_env.objects:
+			if obj.type.name != "Mesh":
+				continue
+			try:
+				m = obj.read()
+			except Exception:
+				m = None
+			modern = bool(getattr(m, "m_VertexData", None) and getattr(m.m_VertexData, "m_VertexCount", 0) > 0) if m else False
+			items.append({
+				"path_id": obj.path_id,
+				"container": getattr(obj, "container", None),
+				"modern_vertex": modern,
+			})
+		return items
+	except Exception:
+		return []
 
 
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False) -> Tuple[bool, str]:
@@ -183,71 +206,108 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 	Returns (ok, reason/message).
 	"""
 	Environment = _load_env_class()
-	if Environment is None:
-		return False, "Environment module not found"
-
-	env = Environment(assets_path)
-	candidate = None
-	for obj in env.objects:
-		if obj.type.name != "Mesh":
-			continue
-		if target_path_id is not None and obj.path_id == target_path_id:
-			candidate = obj
-			break
-		if target_name and obj.container and os.path.basename(obj.container).startswith(target_name):
-			candidate = obj
-			break
-
-	if not candidate:
-		return False, "Target mesh not found"
-
-	m = candidate.read(return_typetree_on_error=True)
-	# Heuristic: if modern vertex streams are present, abort (not implemented here)
-	if hasattr(m, "m_VertexData") and getattr(m.m_VertexData, "m_VertexCount", 0) > 0:
-		return False, "Target mesh uses modern VertexData (not supported)"
-
-	# Populate legacy arrays
-	m.m_VertexCount = len(obj_mesh.vertices)
-	m.m_Vertices = [c for v in obj_mesh.vertices for c in (v[0], v[1], v[2])]
-	m.m_Normals = [c for n in obj_mesh.normals_u for c in (n[0], n[1], n[2])]
-	m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
-	# Index data
-	m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
-	m.m_Indices = list(obj_mesh.indices)
-	m.m_IndexBuffer = list(obj_mesh.indices)
-
-	# Single SubMesh covering all indices (use dict to be compatible with typetree writer)
-	m.m_SubMeshes = [{
-		"firstByte": 0,
-		"indexCount": len(obj_mesh.indices),
-		"topology": 0,  # triangles
-		"triangleCount": len(obj_mesh.indices) // 3,
-		"baseVertex": 0,
-		"firstVertex": 0,
-		"vertexCount": len(obj_mesh.vertices),
-		"localAABB": getattr(m, "m_LocalAABB", None),
-	}]
-
-	# Save via typetree to ensure all fields are written
+	# First attempt with native Environment
+	if Environment is not None:
+		try:
+			env = Environment(assets_path)
+			candidate = None
+			for obj in env.objects:
+				if obj.type.name != "Mesh":
+					continue
+				if target_path_id is not None and obj.path_id == target_path_id:
+					candidate = obj
+					break
+				if target_name and obj.container and os.path.basename(obj.container).startswith(target_name):
+					candidate = obj
+					break
+			if candidate:
+				m = candidate.read(return_typetree_on_error=True)
+				if hasattr(m, "m_VertexData") and getattr(m.m_VertexData, "m_VertexCount", 0) > 0:
+					return False, "Target mesh uses modern VertexData (not supported)"
+				m.m_VertexCount = len(obj_mesh.vertices)
+				m.m_Vertices = [c for v in obj_mesh.vertices for c in (v[0], v[1], v[2])]
+				m.m_Normals = [c for n in obj_mesh.normals_u for c in (n[0], n[1], n[2])]
+				m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
+				m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
+				m.m_Indices = list(obj_mesh.indices)
+				m.m_IndexBuffer = list(obj_mesh.indices)
+				m.m_SubMeshes = [{
+					"firstByte": 0,
+					"indexCount": len(obj_mesh.indices),
+					"topology": 0,
+					"triangleCount": len(obj_mesh.indices) // 3,
+					"baseVertex": 0,
+					"firstVertex": 0,
+					"vertexCount": len(obj_mesh.vertices),
+					"localAABB": getattr(m, "m_LocalAABB", None),
+				}]
+				m.save_typetree()
+				try:
+					m.assets_file.mark_changed()
+				except Exception:
+					pass
+				if out_dir:
+					env.out_path = out_dir
+				os.makedirs(env.out_path, exist_ok=True)
+				env.save(pack="none")
+				return True, os.path.join(env.out_path, os.path.basename(assets_path))
+		except Exception as e:
+			if debug:
+				print(f"[DEBUG] Native Environment failed: {e}")
+	# Fallback with UnityPy direct editing
 	try:
-		m.save_typetree()
+		import UnityPy
+		up_env = UnityPy.load(assets_path)
+		candidate = None
+		for obj in up_env.objects:
+			if obj.type.name != "Mesh":
+				continue
+			if target_path_id is not None and obj.path_id == target_path_id:
+				candidate = obj
+				break
+			if target_name and getattr(obj, "container", None) and os.path.basename(obj.container).startswith(target_name):
+				candidate = obj
+				break
+		if not candidate:
+			return False, "Target mesh not found"
+		m = candidate.read()
+		if hasattr(m, "m_VertexData") and getattr(m.m_VertexData, "m_VertexCount", 0) > 0:
+			return False, "Target mesh uses modern VertexData (not supported)"
+		m.m_VertexCount = len(obj_mesh.vertices)
+		m.m_Vertices = [c for v in obj_mesh.vertices for c in (v[0], v[1], v[2])]
+		m.m_Normals = [c for n in obj_mesh.normals_u for c in (n[0], n[1], n[2])]
+		m.m_UV0 = [c for t in obj_mesh.uvs_u for c in (t[0], t[1])]
+		m.m_Use16BitIndices = max(obj_mesh.indices) < 65535 if obj_mesh.indices else True
+		m.m_Indices = list(obj_mesh.indices)
+		m.m_IndexBuffer = list(obj_mesh.indices)
+		m.m_SubMeshes = [{
+			"firstByte": 0,
+			"indexCount": len(obj_mesh.indices),
+			"topology": 0,
+			"triangleCount": len(obj_mesh.indices) // 3,
+			"baseVertex": 0,
+			"firstVertex": 0,
+			"vertexCount": len(obj_mesh.vertices),
+			"localAABB": getattr(m, "m_LocalAABB", None),
+		}]
+		# Try save; UnityPy objects also support save_typetree in most cases
+		try:
+			m.save_typetree()
+		except Exception:
+			try:
+				m.save()
+			except Exception as e2:
+				return False, f"Failed to save mesh data: {e2}"
+		if out_dir:
+			up_env.out_path = out_dir
+		os.makedirs(getattr(up_env, "out_path", os.path.join(os.getcwd(), "output")), exist_ok=True)
+		try:
+			up_env.save()
+		except Exception as e:
+			return False, f"Failed to save env: {e}"
+		return True, os.path.join(getattr(up_env, "out_path", "."), os.path.basename(assets_path))
 	except Exception as e:
-		return False, f"Failed to save typetree: {e}"
-	# Ensure the asset is flagged as changed
-	try:
-		m.assets_file.mark_changed()
-	except Exception:
-		pass
-
-	# Prepare output dir and save
-	if out_dir:
-		env.out_path = out_dir
-	os.makedirs(env.out_path, exist_ok=True)
-	try:
-		env.save(pack="none")
-	except Exception as e:
-		return False, f"Failed to save env: {e}"
-	return True, os.path.join(env.out_path, os.path.basename(assets_path))
+		return False, f"UnityPy fallback failed: {e}"
 
 
 def main(argv: List[str]) -> int:
