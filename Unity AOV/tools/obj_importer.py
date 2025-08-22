@@ -294,8 +294,11 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				except Exception as e:
 					if debug:
 						print(f"[DEBUG] m.save() failed: {e}")
-					# fallback to typetree
-					m.save_typetree()
+					# fallback to typetree only if available
+					if hasattr(m, "save_typetree"):
+						m.save_typetree()
+					else:
+						return False, f"Mesh class doesn't support save_typetree and save() failed: {e}"
 				try:
 					m.assets_file.mark_changed()
 				except Exception:
@@ -350,11 +353,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		# Try save
 		try:
 			m.save()
-		except Exception:
-			try:
-				m.save_typetree()
-			except Exception as e2:
-				return False, f"Failed to save mesh data: {e2}"
+		except Exception as e:
+			return False, f"UnityPy Mesh can't be saved: {e}"
 		if out_dir:
 			up_env.out_path = out_dir
 		os.makedirs(getattr(up_env, "out_path", os.path.join(os.getcwd(), "output")), exist_ok=True)
