@@ -1,0 +1,304 @@
+2025-08-16 00:13:30,615 - INFO - UnityPy imported successfully
+2025-08-16 00:13:30,616 - WARNING - Thư mục input không tồn tại: /sdcard/asetinp/
+2025-08-16 00:13:30,622 - INFO - Đã tạo thư mục input: /sdcard/asetinp/
+2025-08-16 00:13:30,622 - WARNING - Thư mục output không tồn tại: /sdcard/asetoutput/
+2025-08-16 00:13:30,623 - INFO - Đã tạo thư mục output: /sdcard/asetoutput/
+2025-08-16 00:15:23,062 - INFO - UnityPy imported successfully
+2025-08-16 00:15:26,231 - WARNING - Không tìm thấy file .assetbundle nào trong /sdcard/asetinp/
+2025-08-16 00:15:59,570 - WARNING - Không tìm thấy file .assetbundle nào trong /sdcard/asetinp/
+2025-08-16 00:16:09,525 - INFO - UnityPy imported successfully
+2025-08-16 00:16:10,473 - WARNING - Không tìm thấy file .assetbundle nào trong /sdcard/asetinp/
+2025-08-16 00:18:20,164 - INFO - UnityPy imported successfully
+2025-08-16 00:18:20,165 - WARNING - Thư mục output không tồn tại: C:/Users/acer/Documents/texture2d/asetoutput/
+2025-08-16 00:18:20,165 - INFO - Đã tạo thư mục output: C:/Users/acer/Documents/texture2d/asetoutput/
+2025-08-16 00:18:29,049 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 00:18:29,049 - ERROR - Lỗi khi xử lý file C:\Users\acer\Documents\texture2d\allshared.assetbundle: The BundleFile is encrypted, but no key was provided!
+You can set the key via UnityPy.set_assetbundle_decrypt_key(key).
+To try brute-forcing the key, use UnityPy.helpers.ArchiveStorageManager.brute_force_key(fp, key_sig, data_sig)
+with  key_sig = b'7|\x07\x9d\xa8\xc5}\xb1,\xc2\x93I\x1a\xdb\xeb\x11', data_sig = b'\xf9\xbc\x15<\x01:\xd1\xff\x93\xff\x18\xdb\nSjJ',and fp being the path to global-metadata.dat or a memory dump.
+2025-08-16 00:18:29,051 - ERROR - Traceback (most recent call last):
+  File "C:\Users\acer\Documents\texture2d\ex.py", line 66, in extract_assets
+    env = UnityPy.load(str(file_path))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\environment.py", line 54, in __init__
+    self.load_file(arg)
+  File "C:\Python312\Lib\site-packages\UnityPy\environment.py", line 149, in load_file
+    f = parse_file(
+        ^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\helpers\ImportHelper.py", line 149, in parse_file
+    f = files.BundleFile(reader, parent, name=name, is_dependency=is_dependency)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\files\BundleFile.py", line 46, in __init__
+    m_DirectoryInfo, blocksReader = self.read_fs(reader)
+                                    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\files\BundleFile.py", line 119, in read_fs
+    self.decryptor = ArchiveStorageManager.ArchiveStorageDecryptor(reader)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\helpers\ArchiveStorageManager.py", line 77, in __init__
+    raise LookupError(
+LookupError: The BundleFile is encrypted, but no key was provided!
+You can set the key via UnityPy.set_assetbundle_decrypt_key(key).
+To try brute-forcing the key, use UnityPy.helpers.ArchiveStorageManager.brute_force_key(fp, key_sig, data_sig)
+with  key_sig = b'7|\x07\x9d\xa8\xc5}\xb1,\xc2\x93I\x1a\xdb\xeb\x11', data_sig = b'\xf9\xbc\x15<\x01:\xd1\xff\x93\xff\x18\xdb\nSjJ',and fp being the path to global-metadata.dat or a memory dump.
+
+2025-08-16 00:21:24,207 - INFO - UnityPy imported successfully
+2025-08-16 00:21:30,860 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 00:21:30,861 - WARNING - AssetBundle được mã hóa: allshared.assetbundle
+2025-08-16 00:21:30,862 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 00:21:30,950 - WARNING - ❌ Không thể tìm thấy key bằng brute force
+2025-08-16 00:23:47,444 - INFO - UnityPy imported successfully
+2025-08-16 00:23:51,514 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput\allshared
+2025-08-16 00:23:51,514 - WARNING - Không tìm thấy AssetBundle gốc: \sdcard\asetinp\allshared.assetbundle
+2025-08-16 00:27:16,951 - INFO - UnityPy imported successfully
+2025-08-16 00:27:22,298 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput\allshared
+2025-08-16 00:27:22,298 - WARNING - Không tìm thấy AssetBundle gốc: C:\Users\acer\Documents\texture2d\asetoutput\allshared.assetbundle
+2025-08-16 00:28:26,285 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput\allshared
+2025-08-16 00:28:26,287 - WARNING - AssetBundle gốc được mã hóa: allshared.assetbundle
+2025-08-16 00:28:26,287 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\asetoutput\allshared.assetbundle
+2025-08-16 00:28:26,385 - WARNING - ❌ Không thể tìm thấy key bằng brute force
+2025-08-16 22:19:08,480 - INFO - UnityPy imported successfully
+2025-08-16 22:19:10,139 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:19:10,141 - WARNING - AssetBundle được mã hóa: allshared.assetbundle
+2025-08-16 22:19:10,141 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:19:10,217 - WARNING - ❌ Không thể tìm thấy key bằng brute force
+2025-08-16 22:21:57,018 - INFO - UnityPy imported successfully
+2025-08-16 22:21:58,188 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:21:58,189 - WARNING - AssetBundle được mã hóa: allshared.assetbundle
+2025-08-16 22:21:58,190 - INFO - Thử nhiều phương pháp giải mã cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:21:58,190 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:21:58,190 - INFO - Thử cặp signature 1-1: key_sig=377c079da8c57db12cc293491adbeb11, data_sig=f9bc153c013ad1ff93ff18db0a536a4a
+2025-08-16 22:21:58,243 - INFO - Thử cặp signature 1-2: key_sig=377c079da8c57db12cc293491adbeb11, data_sig=aabbccddeeff00112233445566778899
+2025-08-16 22:21:58,277 - INFO - Thử cặp signature 1-3: key_sig=377c079da8c57db12cc293491adbeb11, data_sig=5566778899aabbccddeeff0011223344
+2025-08-16 22:21:58,311 - INFO - Thử cặp signature 2-1: key_sig=123456789abcdef01122334455667788, data_sig=f9bc153c013ad1ff93ff18db0a536a4a
+2025-08-16 22:21:58,344 - INFO - Thử cặp signature 2-2: key_sig=123456789abcdef01122334455667788, data_sig=aabbccddeeff00112233445566778899
+2025-08-16 22:21:58,377 - INFO - Thử cặp signature 2-3: key_sig=123456789abcdef01122334455667788, data_sig=5566778899aabbccddeeff0011223344
+2025-08-16 22:21:58,411 - INFO - Thử cặp signature 3-1: key_sig=00112233445566778899aabbccddeeff, data_sig=f9bc153c013ad1ff93ff18db0a536a4a
+2025-08-16 22:21:58,444 - INFO - Thử cặp signature 3-2: key_sig=00112233445566778899aabbccddeeff, data_sig=aabbccddeeff00112233445566778899
+2025-08-16 22:21:58,477 - INFO - Thử cặp signature 3-3: key_sig=00112233445566778899aabbccddeeff, data_sig=5566778899aabbccddeeff0011223344
+2025-08-16 22:21:58,511 - WARNING - ❌ Không thể tìm thấy key bằng brute force với tất cả các signature
+2025-08-16 22:21:58,512 - INFO - Thử key phổ biến 1: 00000000000000000000000000000000
+2025-08-16 22:21:58,512 - INFO - Thử key phổ biến 2: ffffffffffffffffffffffffffffffff
+2025-08-16 22:21:58,513 - INFO - Thử key phổ biến 3: 0123456789abcdeffedcba9876543210
+2025-08-16 22:21:58,513 - INFO - Thử key phổ biến 4: 7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+2025-08-16 22:21:58,514 - INFO - Thử load không có key (có thể file không mã hóa)
+2025-08-16 22:21:58,515 - INFO - Bỏ qua file: allshared.assetbundle
+2025-08-16 22:25:57,172 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:25:57,173 - ERROR - Lỗi khi xử lý file C:\Users\acer\Documents\texture2d\allshared.assetbundle: Invalid signature b'6\x99\xa8\xe1\xc6\x9c1\x8a\xcaI\xb8\x89\xa2+\xce\x81' != b'#$unity3dchina!@'
+2025-08-16 22:25:57,183 - ERROR - Traceback (most recent call last):
+  File "C:\Users\acer\Documents\texture2d\ex.py", line 269, in extract_assets
+    try:
+         
+  File "C:\Python312\Lib\site-packages\UnityPy\environment.py", line 54, in __init__
+    self.load_file(arg)
+  File "C:\Python312\Lib\site-packages\UnityPy\environment.py", line 149, in load_file
+    f = parse_file(
+        ^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\helpers\ImportHelper.py", line 149, in parse_file
+    f = files.BundleFile(reader, parent, name=name, is_dependency=is_dependency)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\files\BundleFile.py", line 46, in __init__
+    m_DirectoryInfo, blocksReader = self.read_fs(reader)
+                                    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\files\BundleFile.py", line 119, in read_fs
+    self.decryptor = ArchiveStorageManager.ArchiveStorageDecryptor(reader)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\site-packages\UnityPy\helpers\ArchiveStorageManager.py", line 91, in __init__
+    raise Exception(f"Invalid signature {signature} != {UNITY3D_SIGNATURE}")
+Exception: Invalid signature b'6\x99\xa8\xe1\xc6\x9c1\x8a\xcaI\xb8\x89\xa2+\xce\x81' != b'#$unity3dchina!@'
+
+2025-08-16 22:26:05,435 - INFO - UnityPy imported successfully
+2025-08-16 22:26:06,174 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:26:06,175 - WARNING - AssetBundle được mã hóa: allshared.assetbundle
+2025-08-16 22:26:06,176 - INFO - Thử nhiều phương pháp giải mã cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:26:06,176 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:26:06,176 - INFO - Thử key phổ biến 1: 00000000000000000000000000000000
+2025-08-16 22:26:06,194 - INFO - Thử key phổ biến 2: ffffffffffffffffffffffffffffffff
+2025-08-16 22:26:06,194 - INFO - Thử key phổ biến 3: 0123456789abcdeffedcba9876543210
+2025-08-16 22:26:06,195 - INFO - Thử key phổ biến 4: 7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+2025-08-16 22:26:06,195 - INFO - Thử load không có key (có thể file không mã hóa)
+2025-08-16 22:26:06,196 - INFO - Bỏ qua file: allshared.assetbundle
+2025-08-16 22:33:17,154 - INFO - UnityPy imported successfully
+2025-08-16 22:34:14,996 - INFO - UnityPy imported successfully
+2025-08-16 22:34:17,538 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:34:26,295 - INFO - Đang xử lý AssetBundle: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:34:26,296 - WARNING - AssetBundle được mã hóa: allshared.assetbundle
+2025-08-16 22:34:26,296 - INFO - Thử nhiều phương pháp giải mã cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:34:26,297 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:34:26,297 - INFO - Thử key phổ biến 1: 00000000000000000000000000000000
+2025-08-16 22:34:26,315 - INFO - Thử key phổ biến 2: ffffffffffffffffffffffffffffffff
+2025-08-16 22:34:26,316 - INFO - Thử key phổ biến 3: 0123456789abcdeffedcba9876543210
+2025-08-16 22:34:26,317 - INFO - Thử key phổ biến 4: 7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+2025-08-16 22:34:26,318 - INFO - Thử load không có key (có thể file không mã hóa)
+2025-08-16 22:34:26,319 - INFO - Bỏ qua file: allshared.assetbundle
+2025-08-16 22:44:07,305 - INFO - UnityPy imported successfully
+2025-08-16 22:44:12,663 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:44:32,237 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:44:32,237 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:44:32,237 - WARNING - Không tìm thấy file chính trong asetoutput
+2025-08-16 22:44:56,896 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:44:56,896 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:44:56,897 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:44:56,897 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:46:48,395 - INFO - UnityPy imported successfully
+2025-08-16 22:46:49,208 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:46:53,356 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:46:53,357 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:46:53,357 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:46:53,357 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:46:53,357 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:47:18,210 - INFO - UnityPy imported successfully
+2025-08-16 22:47:24,567 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:47:33,205 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:47:33,206 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:47:33,211 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:47:33,211 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:47:33,211 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:47:57,645 - INFO - UnityPy imported successfully
+2025-08-16 22:48:02,420 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:48:08,468 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:48:08,470 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:48:08,470 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:48:08,470 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:48:08,470 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:48:08,471 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:48:08,471 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:48:38,784 - INFO - UnityPy imported successfully
+2025-08-16 22:48:44,310 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:48:47,983 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:48:47,984 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:48:47,984 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:48:47,984 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:48:47,984 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:48:47,984 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:48:47,985 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:48:47,985 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:48:47,985 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:48:47,985 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:49:04,727 - INFO - UnityPy imported successfully
+2025-08-16 22:49:08,315 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:49:11,751 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:49:11,752 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:49:11,752 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:49:11,752 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:49:11,752 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:49:11,753 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:49:11,753 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:49:11,753 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:49:11,753 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:49:11,753 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:49:58,198 - INFO - UnityPy imported successfully
+2025-08-16 22:50:01,846 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:50:06,895 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:50:06,896 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:50:06,896 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:50:06,896 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:50:06,896 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:50:06,897 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:50:06,897 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:50:06,897 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:50:06,897 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:50:06,897 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:50:36,125 - INFO - UnityPy imported successfully
+2025-08-16 22:50:38,297 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:50:41,434 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:50:41,434 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:50:41,434 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:50:41,435 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:50:41,435 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:50:41,435 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:50:41,435 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:50:41,435 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:50:41,436 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:50:41,436 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:50:41,436 - INFO - Bắt đầu thử load file chính...
+2025-08-16 22:51:02,913 - INFO - UnityPy imported successfully
+2025-08-16 22:51:05,372 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:51:08,499 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:51:08,500 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:51:08,500 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:51:08,501 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:51:08,501 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:51:08,501 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:51:08,501 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:51:08,501 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:51:08,501 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:51:08,501 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:51:08,502 - INFO - Bắt đầu thử load file chính...
+2025-08-16 22:51:08,502 - INFO - Thử UnityPy.load...
+2025-08-16 22:51:43,872 - INFO - UnityPy imported successfully
+2025-08-16 22:51:46,589 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:51:49,747 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:51:49,747 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:51:49,747 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:51:49,748 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:51:49,748 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:51:49,748 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:51:49,748 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:51:49,748 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:51:49,748 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:51:49,749 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:51:49,749 - INFO - Bắt đầu thử load file chính...
+2025-08-16 22:51:49,749 - WARNING - ⚠️ File không phải là Unity AssetBundle hợp lệ
+2025-08-16 22:51:49,749 - INFO - Tạo AssetBundle mới từ dữ liệu đã giải nén...
+2025-08-16 22:51:49,749 - INFO - Bắt đầu tạo AssetBundle mới...
+2025-08-16 22:51:49,750 - INFO - Đã đọc 568496 bytes từ file chính
+2025-08-16 22:51:49,750 - INFO - Đã tạo Environment mới
+2025-08-16 22:51:49,750 - INFO - Đang tạo AssetBundle mới từ dữ liệu đã giải nén...
+2025-08-16 22:51:49,750 - INFO - Đã thêm test object vào environment
+2025-08-16 22:51:49,750 - INFO - ✅ Đã tạo environment mới thành công
+2025-08-16 22:51:49,751 - INFO - Đang load file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:51:49,751 - INFO - ✅ Đã load file ResS thành công: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:51:49,751 - INFO - Số object trong file ResS: 0
+2025-08-16 22:51:49,751 - INFO - ✅ Đã merge file ResS vào AssetBundle: 0 object được thêm
+2025-08-16 22:51:49,751 - INFO - Đang lưu AssetBundle: C:\Users\acer\Documents\texture2d\asetoutput\asetoutput.assetbundle
+2025-08-16 22:51:49,752 - ERROR - Không thể tạo AssetBundle cho asetoutput - env.file không tồn tại
+2025-08-16 22:55:26,968 - INFO - UnityPy imported successfully
+2025-08-16 22:55:30,316 - INFO - Sử dụng UnityPy mặc định
+2025-08-16 22:55:34,676 - INFO - Sử dụng phương thức nén: lzma
+2025-08-16 22:55:34,676 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-16 22:55:34,677 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:55:34,677 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-16 22:55:34,677 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-16 22:55:34,677 - INFO - Kích thước file: 568496 bytes
+2025-08-16 22:55:34,677 - INFO - Header file: 00000000000000000000001600000000
+2025-08-16 22:55:34,677 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-16 22:55:34,677 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-16 22:55:34,679 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-16 22:55:34,679 - INFO - Bắt đầu thử load file chính...
+2025-08-16 22:55:34,679 - WARNING - ⚠️ File không phải là Unity AssetBundle hợp lệ
+2025-08-16 22:55:34,679 - INFO - Tạo AssetBundle mới từ dữ liệu đã giải nén...
+2025-08-16 22:55:34,679 - INFO - Bắt đầu tạo AssetBundle mới từ file đã giải nén...
+2025-08-16 22:55:34,679 - INFO - Sử dụng AssetBundle gốc làm template: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:55:34,681 - WARNING - AssetBundle gốc được mã hóa: allshared.assetbundle
+2025-08-16 22:55:34,681 - INFO - Thử nhiều phương pháp giải mã cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:55:34,682 - INFO - Đang thử brute force key cho: C:\Users\acer\Documents\texture2d\allshared.assetbundle
+2025-08-16 22:55:34,682 - INFO - Thử key phổ biến 1: 00000000000000000000000000000000
+2025-08-16 22:55:34,714 - INFO - Thử key phổ biến 2: ffffffffffffffffffffffffffffffff
+2025-08-16 22:55:34,715 - INFO - Thử key phổ biến 3: 0123456789abcdeffedcba9876543210
+2025-08-16 22:55:34,716 - INFO - Thử key phổ biến 4: 7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+2025-08-16 22:55:34,716 - INFO - Thử load không có key (có thể file không mã hóa)
+2025-08-16 22:55:34,717 - ERROR - Không thể giải mã AssetBundle gốc
+2025-08-16 23:13:04,523 - INFO - UnityPy imported successfully
+2025-08-23 00:15:44,950 - INFO - UnityPy imported successfully
+2025-08-23 00:15:51,852 - INFO - Sử dụng phương thức nén: lz4hc
+2025-08-23 00:15:51,853 - INFO - Đang xử lý thư mục: C:\Users\acer\Documents\texture2d\asetoutput
+2025-08-23 00:15:51,853 - INFO - Tìm thấy file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-23 00:15:51,854 - INFO - Tìm thấy file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-23 00:15:51,854 - INFO - Đang load file chính: CAB-3c1fdde9cba1788379d58d2d6b6b7aff
+2025-08-23 00:15:51,854 - INFO - Kích thước file: 568496 bytes
+2025-08-23 00:15:51,855 - INFO - Header file: 00000000000000000000001600000000
+2025-08-23 00:15:51,855 - INFO - Signature: b'\x00\x00\x00\x00\x00\x00\x00\x00'
+2025-08-23 00:15:51,855 - WARNING - ⚠️ File không có Unity signature hợp lệ
+2025-08-23 00:15:51,855 - WARNING - Có thể đây là file đã được giải nén, không phải AssetBundle gốc
+2025-08-23 00:15:51,855 - INFO - Tạo AssetBundle mới từ dữ liệu đã giải nén...
+2025-08-23 00:15:51,855 - INFO - Bắt đầu tạo AssetBundle mới...
+2025-08-23 00:15:51,856 - INFO - Đã tạo Environment mới
+2025-08-23 00:15:51,856 - INFO - Đang tạo AssetBundle mới từ dữ liệu đã giải nén...
+2025-08-23 00:15:51,856 - INFO - Đã thêm test object vào environment
+2025-08-23 00:15:51,856 - INFO - ✅ Đã tạo environment mới thành công
+2025-08-23 00:15:51,856 - INFO - Đang load file ResS: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-23 00:15:51,857 - INFO - ✅ Đã load file ResS thành công: CAB-3c1fdde9cba1788379d58d2d6b6b7aff.resS
+2025-08-23 00:15:51,857 - INFO - Số object trong file ResS: 0
+2025-08-23 00:15:51,858 - INFO - ✅ Đã merge file ResS vào AssetBundle: 0 object được thêm
+2025-08-23 00:15:51,858 - INFO - Đang lưu AssetBundle: C:\Users\acer\Documents\texture2d\asetoutput\asetoutput.assetbundle
+2025-08-23 00:15:51,858 - ERROR - Không thể tạo AssetBundle cho asetoutput - env.file không tồn tại
