@@ -523,6 +523,26 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 								pv.m_NumItems = 0
 					# ensure index buffer for legacy triangle build
 					m.m_IndexBuffer = list(obj_mesh.indices)
+					# ensure at least one SubMesh object for exporters
+					try:
+						from importlib import import_module
+						MeshMod = import_module(f"{m.__class__.__module__}")
+						SubMesh = getattr(MeshMod, 'SubMesh')
+						if not getattr(m, 'm_SubMeshes', None):
+							sm = object.__new__(SubMesh)
+							sm.firstByte = 0
+							sm.indexCount = len(obj_mesh.indices)
+							sm.topology = 0
+							sm.baseVertex = 0
+							sm.firstVertex = 0
+							sm.vertexCount = len(obj_mesh.vertices)
+							sm.localAABB = getattr(m, 'm_LocalAABB', None)
+							m.m_SubMeshes = [sm]
+					except Exception:
+						if not getattr(m, 'm_SubMeshes', None):
+							class _SM: pass
+							sm = _SM(); sm.firstByte=0; sm.indexCount=len(obj_mesh.indices); sm.topology=0; sm.baseVertex=0; sm.firstVertex=0; sm.vertexCount=len(obj_mesh.vertices); sm.localAABB=getattr(m,'m_LocalAABB',None)
+							m.m_SubMeshes = [sm]
 				else:
 					try:
 						ver = getattr(m, 'version', (2022,3,5))
@@ -649,6 +669,26 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 						pv.m_NumItems = 0
 			# ensure index buffer for legacy triangle build
 			m.m_IndexBuffer = list(obj_mesh.indices)
+			# ensure at least one SubMesh object for exporters
+			try:
+				from importlib import import_module
+				MeshMod = import_module(f"{m.__class__.__module__}")
+				SubMesh = getattr(MeshMod, 'SubMesh')
+				if not getattr(m, 'm_SubMeshes', None):
+					sm = object.__new__(SubMesh)
+					sm.firstByte = 0
+					sm.indexCount = len(obj_mesh.indices)
+					sm.topology = 0
+					sm.baseVertex = 0
+					sm.firstVertex = 0
+					sm.vertexCount = len(obj_mesh.vertices)
+					sm.localAABB = getattr(m, 'm_LocalAABB', None)
+					m.m_SubMeshes = [sm]
+			except Exception:
+				if not getattr(m, 'm_SubMeshes', None):
+					class _SM: pass
+					sm = _SM(); sm.firstByte=0; sm.indexCount=len(obj_mesh.indices); sm.topology=0; sm.baseVertex=0; sm.firstVertex=0; sm.vertexCount=len(obj_mesh.vertices); sm.localAABB=getattr(m,'m_LocalAABB',None)
+					m.m_SubMeshes = [sm]
 		else:
 			try:
 				ver = getattr(m, 'version', (2022,3,5))
