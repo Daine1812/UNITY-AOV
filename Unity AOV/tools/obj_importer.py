@@ -429,6 +429,32 @@ def _rebuild_vertex_data_modern(m, verts: List[Tuple[float, float, float]], norm
 		raise
 
 
+def _clamp_vertexdata_bytes(vd):
+	try:
+		chs = getattr(vd, 'm_Channels', None)
+		if chs:
+			for c in chs:
+				if hasattr(c, 'stream'):
+					c.stream = int(max(0, min(255, int(c.stream))))
+				if hasattr(c, 'offset'):
+					c.offset = int(max(0, min(255, int(c.offset))))
+				if hasattr(c, 'format'):
+					c.format = int(max(0, min(255, int(c.format))))
+				if hasattr(c, 'dimension'):
+					c.dimension = int(max(0, min(255, int(c.dimension))))
+		s = getattr(vd, 'm_Streams', None)
+		if isinstance(s, dict) and 0 in s:
+			si = s[0]
+			if hasattr(si, 'stride'):
+				si.stride = int(max(0, min(255, int(getattr(si, 'stride', 0)))))
+			if hasattr(si, 'dividerOp'):
+				si.dividerOp = int(max(0, min(255, int(getattr(si, 'dividerOp', 0)))))
+			if hasattr(si, 'frequency'):
+				si.frequency = int(max(0, min(65535, int(getattr(si, 'frequency', 0)))))
+	except Exception:
+		pass
+
+
 def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
@@ -472,6 +498,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 						_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
 						# Provide index buffer for triangle build
 						m.m_IndexBuffer = list(obj_mesh.indices)
+						# Clamp byte fields in channels/streams
+						_clamp_vertexdata_bytes(m.m_VertexData)
 				except Exception as e:
 					if debug:
 						print(f"[DEBUG] VertexData rebuild skipped: {e}")
@@ -562,6 +590,8 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				_rebuild_vertex_data_modern(m, obj_mesh.vertices, obj_mesh.normals_u, obj_mesh.uvs_u, debug)
 				# Provide index buffer for triangle build
 				m.m_IndexBuffer = list(obj_mesh.indices)
+				# Clamp byte fields in channels/streams
+				_clamp_vertexdata_bytes(m.m_VertexData)
 		except Exception as e:
 			if debug:
 				print(f"[DEBUG] VertexData rebuild skipped: {e}")
