@@ -322,7 +322,7 @@ def _update_submesh_and_flags(m, num_vertices: int, num_indices: int):
 		pass
 
 
-def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False) -> Tuple[bool, str]:
+def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name: Optional[str] = None, target_path_id: Optional[int] = None, out_dir: Optional[str] = None, debug: bool = False, sanitize: bool = False) -> Tuple[bool, str]:
 	"""
 	Attempt to load a Unity assets/bundle, find a Mesh by name or path_id, and replace its geometry.
 	This currently supports meshes that use legacy direct arrays (no modern VertexData streams).
@@ -358,6 +358,20 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 				# writer will serialize from m_Indices/m_Use16BitIndices
 				_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 				_update_aabb(m, obj_mesh.vertices)
+				# Sanitize optional channels to avoid viewer strictness
+				if sanitize:
+					for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
+						if hasattr(m, field):
+							setattr(m, field, [])
+					if hasattr(m, "m_Skin"):
+						m.m_Skin = []
+					if hasattr(m, "m_Shapes"):
+						try:
+							m.m_Shapes.shapes = []
+							m.m_Shapes.channels = []
+							m.m_Shapes.fullWeights = []
+						except Exception:
+							pass
 				# Update existing submeshes if any
 				try:
 					submeshes = getattr(m, "m_SubMeshes", None)
@@ -424,6 +438,20 @@ def try_replace_mesh_in_assets(assets_path: str, obj_mesh: ObjMesh, target_name:
 		# Avoid assigning m_IndexBuffer directly for legacy formats
 		_update_submesh_and_flags(m, len(obj_mesh.vertices), len(obj_mesh.indices))
 		_update_aabb(m, obj_mesh.vertices)
+		# Sanitize optional channels to avoid viewer strictness
+		if sanitize:
+			for field in ("m_Tangents", "m_Colors", "m_UV1", "m_UV2", "m_UV3", "m_UV4", "m_UV5", "m_UV6", "m_UV7"):
+				if hasattr(m, field):
+					setattr(m, field, [])
+			if hasattr(m, "m_Skin"):
+				m.m_Skin = []
+			if hasattr(m, "m_Shapes"):
+				try:
+					m.m_Shapes.shapes = []
+					m.m_Shapes.channels = []
+					m.m_Shapes.fullWeights = []
+				except Exception:
+					pass
 		# Update existing submeshes if any
 		try:
 			submeshes = getattr(m, "m_SubMeshes", None)
@@ -468,6 +496,7 @@ def main(argv: List[str]) -> int:
 	p.add_argument("--debug", dest="debug", action="store_true", help="Print debug info")
 	p.add_argument("--scan-dir", dest="scan_dir", help="Scan a directory recursively to locate files containing meshes")
 	p.add_argument("--find-name", dest="find_name", help="When used with --scan-dir, filter meshes whose container basename startswith this name")
+	p.add_argument("--sanitize", dest="sanitize", action="store_true", help="Clear optional channels (UV1..7, tangents, colors, skin, shapes) to improve compatibility")
 	args = p.parse_args(argv)
 
 	if args.scan_dir:
@@ -525,6 +554,7 @@ def main(argv: List[str]) -> int:
 			target_path_id=args.mesh_path_id,
 			out_dir=args.out_dir or os.path.join(os.getcwd(), "output"),
 			debug=args.debug,
+			sanitize=getattr(args, "sanitize", False),
 		)
 		if not ok:
 			print(f"Mesh replacement failed: {msg}")
